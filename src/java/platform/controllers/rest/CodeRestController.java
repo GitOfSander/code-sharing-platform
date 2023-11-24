@@ -1,84 +1,78 @@
 package platform.controllers.rest;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
-import platform.repositories.Code;
+import platform.entities.Code;
+import platform.repositories.CodeRepository;
+import platform.services.CodeService;
+import platform.utils.DateTimeHelper;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import javax.persistence.EntityNotFoundException;
 import java.util.*;
-import java.util.stream.Collectors;
 
-@Controller
+@RestController
 public class CodeRestController {
-    private static ArrayList<Code> codes = new ArrayList<>();
+    @Autowired
+    private CodeRepository codeRepository;
 
     @GetMapping("/api/code/{id}")
-    public ResponseEntity<Map<String, String>> getCode(@PathVariable("id") int id) {
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add("Content-Type", "application/json");
+    public ResponseEntity<Map<String, String>> getCode(@PathVariable("id") long id) {
+        try {
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.add("Content-Type", "application/json");
 
-        Map<String, String> map = new HashMap<>();
-        map.put("code", codes.get(id).getCode());
-        map.put("date", codes.get(id).getDate());
+            Code code = codeRepository.getById(id);
 
-        return ResponseEntity.ok()
-                .headers(responseHeaders)
-                .body(map);
+            Map<String, String> map = new HashMap<>();
+            map.put("code", code.getCode());
+
+            String strDate = new DateTimeHelper().dateToString(code.getDate());
+            map.put("date", strDate);
+
+            return ResponseEntity.ok()
+                    .headers(responseHeaders)
+                    .body(map);
+        } catch(EntityNotFoundException e) {
+            return (ResponseEntity<Map<String, String>>) ResponseEntity.notFound();
+        }
     }
 
     @GetMapping("/api/code/latest")
-    public ResponseEntity<List<Code>> getLatest() {
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add("Content-Type", "application/json");
+    public ResponseEntity<ArrayList<Map<String, String>>> getLatest() {
+        try {
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.add("Content-Type", "application/json");
 
-        List<Code> latestCodes = (List<Code>) codes.clone();
-        Collections.reverse(latestCodes);
-        latestCodes = latestCodes.stream().limit(10).collect(Collectors.toList());
+            List<Code> codes = codeRepository.findFirst10ByOrderByDateDesc();
+            ArrayList<Map<String, String>> latestCodes = new CodeService().formatCodeMap(codes);
 
-        return ResponseEntity.ok()
-                .headers(responseHeaders)
-                .body(latestCodes);
+            return ResponseEntity.ok()
+                    .headers(responseHeaders)
+                    .body(latestCodes);
+        } catch(EntityNotFoundException e) {
+            return (ResponseEntity<ArrayList<Map<String, String>>>) ResponseEntity.notFound();
+        }
     }
 
     @PostMapping(value = "/api/code/new", consumes = "application/json", produces = "application/json")
     public ResponseEntity<Map<String, String>> postCode(@RequestBody Map<String, String> body) {
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add("Content-Type", "application/json");
+        try {
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.add("Content-Type", "application/json");
 
-        LocalDateTime myDateObj = LocalDateTime.now();
-        DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("yyyy/dd/MM HH:mm:ss");
-        String formattedDate = myDateObj.format(myFormatObj);
-        int length = codes.size();
-        codes.add(new Code(formattedDate, body.get("code").toString()));
+            Code code = new Code(new Date(), body.get("code").toString());
+            code = codeRepository.save(code);
 
-        Map<String, String> map = new HashMap<>();
-        map.put("id", String.valueOf(length));
+            Map<String, String> map = new HashMap<>();
+            map.put("id", String.valueOf(code.getId()));
 
-        return ResponseEntity.ok()
-                .headers(responseHeaders)
-                .body(map);
-    }
-
-    @GetMapping("/code/{id}")
-    public String getIndex(@ModelAttribute("model") ModelMap model, @PathVariable("id") int id) {
-        model.addAttribute("code", codes.get(id).getCode());
-        model.addAttribute("date", codes.get(id).getDate());
-
-        return "index";
-    }
-
-    @GetMapping("/code/latest")
-    public String getIndex(@ModelAttribute("model") ModelMap model) {
-        List<Code> latestCodes = (List<Code>) codes.clone();
-        Collections.reverse(latestCodes);
-        latestCodes = latestCodes.stream().limit(10).collect(Collectors.toList());
-
-        model.addAttribute("codes", latestCodes);
-
-        return "latest";
+            return ResponseEntity.ok()
+                    .headers(responseHeaders)
+                    .body(map);
+        } catch(EntityNotFoundException e) {
+            return (ResponseEntity<Map<String, String>>) ResponseEntity.notFound();
+        }
     }
 }
