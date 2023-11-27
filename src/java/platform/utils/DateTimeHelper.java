@@ -2,6 +2,7 @@ package platform.utils;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 public class DateTimeHelper {
@@ -10,5 +11,12 @@ public class DateTimeHelper {
     public String dateToString(Date date, String... format) {
         DateFormat dateFormat = new SimpleDateFormat(format.length > 0 ? format[0] : DATE_FORMAT);
         return dateFormat.format(date);
+    }
+
+    public Date secondsFromNow(int seconds) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.SECOND, seconds);
+
+        return calendar.getTime();
     }
 }

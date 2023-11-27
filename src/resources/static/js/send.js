@@ -1,5 +1,7 @@
 function send(e) {
     let object = {
+        "views_restriction": document.getElementById("views_restriction").value,
+        "time_restriction": document.getElementById("time_restriction").value,
         "code": document.getElementById("code_snippet").value
     };
 

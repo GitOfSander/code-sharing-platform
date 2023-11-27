@@ -62,7 +62,8 @@ public class CodeRestController {
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.add("Content-Type", "application/json");
 
-            Code code = new Code(new Date(), body.get("code"));
+            Date availableBeforeDate = new DateTimeHelper().secondsFromNow(Integer.parseInt(body.get("time_restriction")));
+            Code code = new Code(new Date(), availableBeforeDate, Integer.parseInt(body.get("views_restriction")), body.get("code"));
             code = codeRepository.save(code);
 
             Map<String, String> map = new HashMap<>();
