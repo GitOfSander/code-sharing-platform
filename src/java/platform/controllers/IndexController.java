@@ -1,6 +1,5 @@
 package platform.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,13 +10,17 @@ import platform.repositories.CodeRepository;
 import platform.services.CodeService;
 import platform.utils.DateTimeHelper;
 
-import javax.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 public class IndexController {
-    @Autowired
-    private CodeRepository codeRepository;
+    private final CodeRepository codeRepository;
+
+    IndexController(CodeRepository codeRepository) {
+        this.codeRepository = codeRepository;
+    }
 
     @GetMapping("/code/new")
     public String getNew() {
@@ -38,17 +41,15 @@ public class IndexController {
 
     @GetMapping("/code/{id}")
     public String getIndex(@ModelAttribute("model") ModelMap model, @PathVariable("id") long id) {
-        try {
-            Code code = codeRepository.getById(id);
+        Optional<Code> code = codeRepository.findById(id);
 
-            model.addAttribute("code", code.getCode());
+        if(code.isEmpty()) return "404";
 
-            String strDate = new DateTimeHelper().dateToString(code.getDate());
-            model.addAttribute("date", strDate);
+        model.addAttribute("code", code.get().getCode());
 
-            return "index";
-        } catch(EntityNotFoundException e) {
-            return "404";
-        }
+        String strDate = new DateTimeHelper().dateToString(code.get().getDate());
+        model.addAttribute("date", strDate);
+
+        return "index";
     }
 }
