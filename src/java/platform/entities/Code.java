@@ -16,21 +16,20 @@ public class Code {
     private UUID id;
     @DateTimeFormat
     private Date date;
-    @DateTimeFormat
-    @Column(name = "available_before_date")
-    private Date availableBeforeDate;
-    @Column(name = "views_before_removal")
-    private int viewsBeforeRemoval;
+    @Column(name = "time_restriction")
+    private int timeRestriction;
+    @Column(name = "views_restriction")
+    private int viewsRestriction;
     private String code;
 
     public Code() {
 
     }
 
-    public Code(Date date, Date availableBeforeDate, int viewsBeforeRemoval, String code) {
+    public Code(Date date, int timeRestriction, int viewsRestriction, String code) {
         this.date = date;
-        this.availableBeforeDate = availableBeforeDate;
-        this.viewsBeforeRemoval = viewsBeforeRemoval;
+        this.timeRestriction = timeRestriction;
+        this.viewsRestriction = viewsRestriction;
         this.code = code;
     }
 
@@ -50,20 +49,20 @@ public class Code {
         this.date = date;
     }
 
-    public Date getAvailableBeforeDate() {
-        return availableBeforeDate;
+    public int getTimeRestriction() {
+        return timeRestriction;
     }
 
-    public void setAvailableBeforeDate(Date availableBeforeDate) {
-        this.availableBeforeDate = availableBeforeDate;
+    public void setTimeRestriction(int timeRestriction) {
+        this.timeRestriction = timeRestriction;
     }
 
-    public int getViewsBeforeRemoval() {
-        return viewsBeforeRemoval;
+    public int getViewsRestriction() {
+        return viewsRestriction;
     }
 
-    public void setViewsBeforeRemoval(int viewsBeforeRemoval) {
-        this.viewsBeforeRemoval = viewsBeforeRemoval;
+    public void setViewsRestriction(int viewsRestriction) {
+        this.viewsRestriction = viewsRestriction;
     }
 
     public String getCode() {

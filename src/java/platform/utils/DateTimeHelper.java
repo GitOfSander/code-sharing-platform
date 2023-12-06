@@ -13,8 +13,9 @@ public class DateTimeHelper {
         return dateFormat.format(date);
     }
 
-    public Date secondsFromNow(int seconds) {
+    public Date addSecondsToDate(int seconds, Date date) {
         Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
         calendar.add(Calendar.SECOND, seconds);
 
         return calendar.getTime();

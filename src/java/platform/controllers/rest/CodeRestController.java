@@ -14,25 +14,34 @@ import java.util.*;
 @RestController
 public class CodeRestController {
     private final CodeRepository codeRepository;
+    private final CodeService codeService;
 
     CodeRestController(CodeRepository codeRepository) {
         this.codeRepository = codeRepository;
+        this.codeService = new CodeService(this.codeRepository);
     }
 
     @GetMapping("/api/code/{id}")
-    public ResponseEntity<Map<String, String>> getCode(@PathVariable("id") long id) {
+    public ResponseEntity<Map<String, String>> getCode(@PathVariable("id") UUID id) {
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add("Content-Type", "application/json");
 
-        Optional<Code> code = codeRepository.findById(id);
+        Optional<Code> optCode = codeRepository.findById(id);
 
-        if(code.isEmpty()) return ResponseEntity.notFound().build();
+        if (optCode.isEmpty()) return ResponseEntity.notFound().build();
+
+        Code code = optCode.get();
+
+        if (codeService.isCodeExpired(code)) return ResponseEntity.notFound().build();
 
         Map<String, String> map = new HashMap<>();
-        map.put("code", code.get().getCode());
+        map.put("code", code.getCode());
 
-        String strDate = new DateTimeHelper().dateToString(code.get().getDate());
+        String strDate = new DateTimeHelper().dateToString(code.getDate());
         map.put("date", strDate);
+
+        if (code.getViewsRestriction() != 0) map.put("views", String.valueOf(code.getViewsRestriction() - 1));
+        if (code.getTimeRestriction() != 0) map.put("time", String.valueOf(code.getTimeRestriction()));
 
         return ResponseEntity.ok()
                 .headers(responseHeaders)
@@ -45,8 +54,8 @@ public class CodeRestController {
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.add("Content-Type", "application/json");
 
-            List<Code> codes = codeRepository.findFirst10ByOrderByDateDesc();
-            ArrayList<Map<String, String>> latestCodes = new CodeService().formatCodeMap(codes);
+            List<Code> codes = codeRepository.findLast10NotRestricted();
+            ArrayList<Map<String, String>> latestCodes = codeService.formatCodeMap(codes);
 
             return ResponseEntity.ok()
                     .headers(responseHeaders)
@@ -62,8 +71,10 @@ public class CodeRestController {
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.add("Content-Type", "application/json");
 
-            Date availableBeforeDate = new DateTimeHelper().secondsFromNow(Integer.parseInt(body.get("time_restriction")));
-            Code code = new Code(new Date(), availableBeforeDate, Integer.parseInt(body.get("views_restriction")), body.get("code"));
+            int timeRestriction = (body.get("time_restriction") != "" ? Integer.parseInt(body.get("time_restriction")) : 0 );
+            int viewsRestriction = (body.get("views_restriction") != "" ? Integer.parseInt(body.get("views_restriction")) + 1 : 0 );
+
+            Code code = new Code(new Date(), timeRestriction, viewsRestriction, body.get("code"));
             code = codeRepository.save(code);
 
             Map<String, String> map = new HashMap<>();

@@ -11,6 +11,13 @@
         <script>hljs.initHighlightingOnLoad();</script>
     </head>
     <body>
+        <#if model["timeRestriction"]?has_content>
+            <span id="time_restriction">${ model["timeRestriction"] }</span>
+        </#if>
+
+        <#if model["viewsRestriction"]?has_content>
+            <span id="views_restriction">${ model["viewsRestriction"] }</span>
+        </#if>
         <span id="load_date">${ model["date"] }</span>
         <pre id="code_snippet">
             <code>${ model["code"] }</code>
